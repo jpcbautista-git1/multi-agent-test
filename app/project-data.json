@@ -1,0 +1,89 @@
+{
+  "projects": [
+    {
+      "name": "Customer Insights Hub",
+      "owner": "Maya Chen",
+      "team": "Data Products",
+      "status": "on track",
+      "priority": "High",
+      "description": "A self-service workspace that brings product feedback and usage signals together.",
+      "progress": 72,
+      "nextMilestone": {
+        "name": "Beta cohort launch",
+        "date": "2026-10-21"
+      },
+      "recentActivity": {
+        "summary": "Beta onboarding checklist approved",
+        "date": "2026-10-11"
+      }
+    },
+    {
+      "name": "Mobile Checkout Refresh",
+      "owner": "Jordan Patel",
+      "team": "Commerce Experience",
+      "status": "at risk",
+      "priority": "Critical",
+      "description": "A faster, more accessible checkout flow for the mobile storefront.",
+      "progress": 48,
+      "nextMilestone": {
+        "name": "Payment-provider certification",
+        "date": "2026-10-18"
+      },
+      "recentActivity": {
+        "summary": "Escalated payment sandbox issue",
+        "date": "2026-10-10"
+      }
+    },
+    {
+      "name": "Identity Access Modernization",
+      "owner": "Elena Rodriguez",
+      "team": "Platform Security",
+      "status": "blocked",
+      "priority": "High",
+      "description": "Modernize account access controls and prepare teams for single sign-on.",
+      "progress": 35,
+      "nextMilestone": {
+        "name": "Vendor architecture decision",
+        "date": "2026-10-16"
+      },
+      "recentActivity": {
+        "summary": "Awaiting legal review of vendor terms",
+        "date": "2026-10-09"
+      }
+    },
+    {
+      "name": "Knowledge Base Migration",
+      "owner": "Samira Okafor",
+      "team": "Customer Operations",
+      "status": "completed",
+      "priority": "Medium",
+      "description": "Move support articles to the new searchable help-center platform.",
+      "progress": 100,
+      "nextMilestone": {
+        "name": "Post-launch content audit",
+        "date": "2026-10-28"
+      },
+      "recentActivity": {
+        "summary": "Migration completed and publishing freeze lifted",
+        "date": "2026-10-08"
+      }
+    },
+    {
+      "name": "Sustainability Reporting",
+      "owner": "Theo Williams",
+      "team": "Finance Systems",
+      "status": "healthy",
+      "priority": "Medium",
+      "description": "Create an auditable reporting workflow for quarterly sustainability metrics.",
+      "progress": 61,
+      "nextMilestone": {
+        "name": "Metrics model review",
+        "date": "2026-10-24"
+      },
+      "recentActivity": {
+        "summary": "Data-source mapping completed",
+        "date": "2026-10-07"
+      }
+    }
+  ]
+}

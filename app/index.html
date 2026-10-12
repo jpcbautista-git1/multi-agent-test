@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Project Pulse portfolio health dashboard">
+    <title>Project Pulse | Portfolio Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-content">
+        <a class="brand" href="#" aria-label="Project Pulse dashboard home">Project <span>Pulse</span></a>
+        <p class="header-context">Portfolio health dashboard</p>
+      </div>
+    </header>
+
+    <main class="dashboard container">
+      <section class="intro" aria-labelledby="dashboard-title">
+        <div>
+          <p class="eyebrow">Delivery overview</p>
+          <h1 id="dashboard-title">Project Pulse</h1>
+          <p>Understand portfolio health, momentum, and the work that needs attention.</p>
+        </div>
+        <div class="updated" aria-live="polite" id="updated-at">Loading portfolio data…</div>
+      </section>
+
+      <section class="health-section" aria-labelledby="health-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Portfolio health</p>
+            <h2 id="health-title">Status at a glance</h2>
+          </div>
+        </div>
+        <div class="health-grid" id="health-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="overall-progress surface-card" aria-labelledby="overall-progress-title">
+        <div>
+          <p class="eyebrow">Overall progress</p>
+          <h2 id="overall-progress-title">Portfolio delivery</h2>
+          <p id="overall-context">Calculating delivery progress across active projects.</p>
+        </div>
+        <div class="overall-meter">
+          <strong id="overall-percent">—</strong>
+          <span>average completion</span>
+          <div class="progress-track" role="progressbar" aria-labelledby="overall-progress-title" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span id="overall-progress-bar"></span>
+          </div>
+        </div>
+      </section>
+
+      <p class="state-message" id="dashboard-state" role="status">Loading projects…</p>
+
+      <section class="workspace" id="dashboard-content" hidden>
+        <section class="portfolio" aria-labelledby="portfolio-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Project portfolio</p>
+              <h2 id="portfolio-title">Active initiatives</h2>
+            </div>
+            <p id="project-total"></p>
+          </div>
+          <div class="project-list" id="project-list"></div>
+        </section>
+
+        <aside class="sidebar" aria-label="Portfolio supporting details">
+          <section class="surface-card sidebar-card" aria-labelledby="ownership-title">
+            <p class="eyebrow">Team ownership</p>
+            <h2 id="ownership-title">Work by team</h2>
+            <ul class="detail-list" id="ownership-list"></ul>
+          </section>
+          <section class="surface-card sidebar-card" aria-labelledby="milestones-title">
+            <p class="eyebrow">Upcoming milestones</p>
+            <h2 id="milestones-title">Next dates</h2>
+            <ul class="detail-list" id="milestone-list"></ul>
+          </section>
+          <section class="surface-card sidebar-card" aria-labelledby="activity-title">
+            <p class="eyebrow">Recent activity</p>
+            <h2 id="activity-title">Latest signals</h2>
+            <ul class="detail-list" id="activity-list"></ul>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const statusMap = {
+          healthy: { key: "healthy", label: "Healthy" },
+          "on track": { key: "healthy", label: "On track" },
+          ontrack: { key: "healthy", label: "On track" },
+          green: { key: "healthy", label: "Healthy" },
+          "at risk": { key: "at-risk", label: "At risk" },
+          atrisk: { key: "at-risk", label: "At risk" },
+          warning: { key: "at-risk", label: "At risk" },
+          blocked: { key: "blocked", label: "Blocked" },
+          stalled: { key: "blocked", label: "Blocked" },
+          delayed: { key: "blocked", label: "Blocked" },
+          completed: { key: "completed", label: "Completed" },
+          complete: { key: "completed", label: "Completed" },
+          done: { key: "completed", label: "Completed" }
+        };
+        const $ = (id) => document.getElementById(id);
+        const text = (value, fallback) => typeof value === "string" && value.trim() ? value.trim() : fallback;
+        const dateValue = (value) => typeof value === "string" && !Number.isNaN(Date.parse(value)) ? value : "";
+
+        function normalizeProject(item, index) {
+          const rawStatus = text(item && item.status, "healthy").toLowerCase().replace(/[_-]/g, " ").replace(/\s+/g, " ");
+          const status = statusMap[rawStatus] || { key: "healthy", label: "Healthy" };
+          const progressNumber = Number(item && item.progress);
+          const progress = Number.isFinite(progressNumber) ? Math.max(0, Math.min(100, Math.round(progressNumber))) : 0;
+          const milestone = item && typeof item.nextMilestone === "object" ? item.nextMilestone : {};
+          const activity = item && typeof item.recentActivity === "object" ? item.recentActivity : {};
+          return {
+            name: text(item && item.name, `Untitled project ${index + 1}`),
+            owner: text(item && item.owner, "Unassigned"),
+            team: text(item && item.team, "Unassigned team"),
+            status,
+            priority: text(item && item.priority, "Not set"),
+            description: text(item && item.description, "No project description is available."),
+            progress,
+            milestone: { name: text(milestone.name, "No milestone scheduled"), date: dateValue(milestone.date) },
+            activity: { summary: text(activity.summary || (typeof (item && item.recentActivity) === "string" ? item.recentActivity : ""), "No recent activity"), date: dateValue(activity.date) }
+          };
+        }
+
+        function element(tag, className, content) {
+          const node = document.createElement(tag);
+          if (className) node.className = className;
+          if (content !== undefined) node.textContent = content;
+          return node;
+        }
+        function formattedDate(value) {
+          return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${value}T00:00:00`));
+        }
+        function appendDate(parent, value) {
+          if (!value) return;
+          const time = element("time", "date", formattedDate(value));
+          time.dateTime = value;
+          parent.append(time);
+        }
+
+        function renderHealth(projects) {
+          const groups = [
+            ["healthy", "Healthy / on-track", "Projects moving as planned"],
+            ["at-risk", "At risk", "Projects needing close attention"],
+            ["blocked", "Blocked", "Projects waiting on resolution"],
+            ["completed", "Completed", "Projects delivered"]
+          ];
+          const target = $("health-grid");
+          groups.forEach(([key, label, context]) => {
+            const card = element("article", `health-card status-${key}`);
+            const count = projects.filter((project) => project.status.key === key).length;
+            card.append(element("span", "health-label", label), element("strong", "health-count", String(count)), element("span", "health-context", context));
+            target.append(card);
+          });
+        }
+
+        function renderProject(project) {
+          const card = element("article", "project-card");
+          const head = element("div", "project-card-head");
+          const heading = element("div");
+          heading.append(element("span", `badge status-${project.status.key}`, project.status.label), element("h3", "", project.name));
+          head.append(heading, element("span", "priority", `${project.priority} priority`));
+          const progress = element("div", "progress-track");
+          progress.setAttribute("role", "progressbar");
+          progress.setAttribute("aria-label", `${project.name} progress`);
+          progress.setAttribute("aria-valuemin", "0");
+          progress.setAttribute("aria-valuemax", "100");
+          progress.setAttribute("aria-valuenow", String(project.progress));
+          const fill = element("span");
+          fill.style.width = `${project.progress}%`;
+          progress.append(fill);
+          const progressLabel = element("div", "progress-label");
+          progressLabel.append(element("span", "", "Progress"), element("strong", "", `${project.progress}% complete`));
+          const ownership = element("p", "ownership");
+          ownership.append(element("strong", "", "Owner: "), document.createTextNode(`${project.owner} · ${project.team}`));
+          const milestone = element("p", "meta-line");
+          milestone.append(element("strong", "", "Next milestone: "), document.createTextNode(project.milestone.name));
+          appendDate(milestone, project.milestone.date);
+          const activity = element("p", "activity-signal");
+          activity.append(element("strong", "", "Recent activity: "), document.createTextNode(project.activity.summary));
+          appendDate(activity, project.activity.date);
+          card.append(head, element("p", "description", project.description), progressLabel, progress, ownership, milestone, activity);
+          return card;
+        }
+
+        function detailItem(primary, secondary, date) {
+          const item = element("li");
+          item.append(element("strong", "", primary), element("span", "", secondary));
+          appendDate(item, date);
+          return item;
+        }
+        function renderDetails(projects) {
+          const teams = new Map();
+          projects.forEach((project) => teams.set(project.team, (teams.get(project.team) || 0) + 1));
+          [...teams.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).forEach(([team, count]) => {
+            $("ownership-list").append(detailItem(team, `${count} ${count === 1 ? "project" : "projects"}`));
+          });
+          projects.filter((project) => project.milestone.date).sort((a, b) => a.milestone.date.localeCompare(b.milestone.date)).slice(0, 4).forEach((project) => {
+            $("milestone-list").append(detailItem(project.milestone.name, project.name, project.milestone.date));
+          });
+          projects.filter((project) => project.activity.date).sort((a, b) => b.activity.date.localeCompare(a.activity.date)).slice(0, 4).forEach((project) => {
+            $("activity-list").append(detailItem(project.activity.summary, project.name, project.activity.date));
+          });
+        }
+
+        function showState(message, isError) {
+          const state = $("dashboard-state");
+          state.textContent = message;
+          state.classList.toggle("error", Boolean(isError));
+          state.hidden = false;
+        }
+        async function loadDashboard() {
+          try {
+            const response = await fetch("project-data.json", { headers: { Accept: "application/json" } });
+            if (!response.ok) throw new Error(`The data request returned ${response.status}.`);
+            const data = await response.json();
+            if (!data || !Array.isArray(data.projects)) throw new Error("The data file does not contain a projects list.");
+            const projects = data.projects.filter((item) => item && typeof item === "object").map(normalizeProject);
+            if (!projects.length) {
+              $("updated-at").textContent = "No project data available";
+              showState("No projects are available yet. Add projects to project-data.json to populate the dashboard.");
+              return;
+            }
+            renderHealth(projects);
+            const average = Math.round(projects.reduce((total, project) => total + project.progress, 0) / projects.length);
+            $("overall-percent").textContent = `${average}%`;
+            $("overall-context").textContent = `Average completion across ${projects.length} projects, including completed work.`;
+            $("overall-progress-bar").style.width = `${average}%`;
+            $("overall-progress-bar").parentElement.setAttribute("aria-valuenow", String(average));
+            projects.forEach((project) => $("project-list").append(renderProject(project)));
+            $("project-total").textContent = `${projects.length} projects`;
+            renderDetails(projects);
+            $("updated-at").textContent = "Portfolio data loaded";
+            $("dashboard-state").hidden = true;
+            $("dashboard-content").hidden = false;
+          } catch (error) {
+            $("updated-at").textContent = "Portfolio data unavailable";
+            showState(`We could not load the portfolio data. ${error.message}`, true);
+          }
+        }
+        loadDashboard();
+      })();
+    </script>
+  </body>
+</html>
